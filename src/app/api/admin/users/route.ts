@@ -43,6 +43,14 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
 
   const { page, limit, search, sortBy, sortOrder } = validationResult.data;
   const offset = (page - 1) * limit;
+  
+  // Create orderBy object with proper typing
+  const orderBy: any = {};
+  if (sortBy) {
+    orderBy[sortBy] = sortOrder;
+  } else {
+    orderBy.createdAt = 'desc';
+  }
 
   // Build where clause for search
   const where = search
@@ -74,9 +82,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
           }
         }
       },
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
+      orderBy,
       skip: offset,
       take: limit,
     })
