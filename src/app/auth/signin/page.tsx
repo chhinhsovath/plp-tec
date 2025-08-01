@@ -54,6 +54,20 @@ export default function SignIn() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Telegram auth error:', errorData);
+        
+        // Call debug endpoint
+        try {
+          const debugResponse = await fetch('/api/auth/telegram-debug', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(telegramUser),
+          });
+          const debugData = await debugResponse.json();
+          console.error('Telegram auth debug:', debugData);
+        } catch (debugError) {
+          console.error('Debug request failed:', debugError);
+        }
+        
         throw new Error(errorData.error || 'Authentication failed');
       }
 
