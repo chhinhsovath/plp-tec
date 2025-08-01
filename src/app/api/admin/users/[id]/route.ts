@@ -123,7 +123,7 @@ export async function DELETE(
 
     // If user has dependencies, deactivate instead of delete
     if (user._count.enrollments > 0 || 
-        user._count.instructedCourses > 0 || 
+        user._count.teachingCourses > 0 || 
         user._count.submissions > 0 || 
         user._count.assessmentAttempts > 0) {
       
