@@ -135,6 +135,9 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const nameParts = name.trim().split(' ');
   const firstName = nameParts[0];
   const lastName = nameParts.slice(1).join(' ') || '';
+  
+  // Generate username from email
+  const username = email.split('@')[0];
 
   // Create user
   const user = await prisma.user.create({
@@ -142,6 +145,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       firstName,
       lastName,
       email,
+      username,
       password: hashedPassword,
       role,
       isActive: true,
@@ -155,14 +159,14 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     include: {
       profile: {
         select: {
-          department: true,
-          phone: true
+          bio: true,  // Contains department info
+          phoneNumber: true
         }
       },
       _count: {
         select: {
           enrollments: true,
-          instructedCourses: true
+          teachingCourses: true
         }
       }
     }

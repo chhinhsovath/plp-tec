@@ -21,30 +21,26 @@ export async function GET(
       where: {
         assessmentId: assessmentId,
         userId: userId,
-        status: 'COMPLETED'
+        status: 'GRADED'
       },
       orderBy: {
-        completedAt: 'desc'
+        submittedAt: 'desc'
       },
       include: {
         assessment: {
           include: {
-            module: {
+            course: {
               select: {
                 title: true,
-                course: {
-                  select: {
-                    title: true,
-                    code: true
-                  }
-                }
+                code: true
               }
             },
             questions: {
               orderBy: { order: 'asc' }
             }
           }
-        }
+        },
+        answers: true
       }
     });
 
@@ -54,7 +50,7 @@ export async function GET(
 
     // Process questions with user answers
     const questionsWithResults = attempt.assessment.questions.map(question => {
-      const userAnswer = attempt.answers?.[question.id];
+      const userAnswer = attempt.answers.find(a => a.questionId === question.id);
       let isCorrect = false;
       let earnedPoints = 0;
 
@@ -62,31 +58,31 @@ export async function GET(
         switch (question.type) {
           case 'MULTIPLE_CHOICE':
           case 'TRUE_FALSE':
-            isCorrect = userAnswer === question.correctAnswer;
+            isCorrect = userAnswer.answer === question.correctAnswer;
             break;
           case 'SHORT_ANSWER':
-            isCorrect = userAnswer.toLowerCase().trim() === question.correctAnswer?.toLowerCase().trim();
+            isCorrect = userAnswer.answer.toLowerCase().trim() === question.correctAnswer?.toLowerCase().trim();
             break;
           case 'ESSAY':
             // For essays, we gave partial credit during submission
-            isCorrect = userAnswer.trim().length > 50;
-            earnedPoints = isCorrect ? question.points * 0.8 : 0;
+            isCorrect = userAnswer.answer.trim().length > 50;
+            earnedPoints = isCorrect ? question.marks * 0.8 : 0;
             break;
         }
         
         if (question.type !== 'ESSAY' && isCorrect) {
-          earnedPoints = question.points;
+          earnedPoints = question.marks;
         }
       }
 
       return {
         id: question.id,
-        question: question.question,
+        question: question.content,
         type: question.type,
         correctAnswer: question.correctAnswer,
-        userAnswer: userAnswer,
+        userAnswer: userAnswer?.answer || null,
         isCorrect: isCorrect,
-        points: question.points,
+        points: question.marks,
         earnedPoints: earnedPoints
       };
     });
@@ -95,19 +91,18 @@ export async function GET(
       assessment: {
         id: attempt.assessment.id,
         title: attempt.assessment.title,
-        passingScore: attempt.assessment.passingScore,
-        totalQuestions: attempt.assessment.totalQuestions,
-        module: attempt.assessment.module
+        passingScore: attempt.assessment.passingMarks,
+        totalQuestions: attempt.assessment.questions.length,
+        course: attempt.assessment.course
       },
       attempt: {
         id: attempt.id,
         score: attempt.score,
-        totalPoints: attempt.totalPoints,
-        earnedPoints: attempt.earnedPoints,
+        percentage: attempt.percentage,
         status: attempt.status,
         startedAt: attempt.startedAt.toISOString(),
-        completedAt: attempt.completedAt?.toISOString(),
-        timeSpent: attempt.timeSpent
+        submittedAt: attempt.submittedAt?.toISOString(),
+        timeTaken: attempt.timeTaken
       },
       questions: questionsWithResults
     };
