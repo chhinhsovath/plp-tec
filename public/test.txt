@@ -1,0 +1,2 @@
+This is a test file to verify deployment.
+If you can see this at https://tec.openplp.com/test.txt, the deployment is working.
