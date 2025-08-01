@@ -63,8 +63,8 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
       include: {
         profile: {
           select: {
-            department: true,
-            phone: true
+            bio: true,  // Contains department info
+            phoneNumber: true
           }
         },
         _count: {
@@ -141,8 +141,8 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       isActive: true,
       profile: {
         create: {
-          department: null,
-          phone: null
+          bio: null,  // Department info can be stored here
+          phoneNumber: null
         }
       }
     },

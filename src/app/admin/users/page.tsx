@@ -15,8 +15,8 @@ interface User {
   createdAt: string;
   lastLoginAt?: string;
   profile?: {
-    department?: string;
-    phone?: string;
+    bio?: string;  // Department info
+    phoneNumber?: string;
   };
   _count: {
     enrollments: number;
@@ -312,7 +312,7 @@ export default function UserManagementPage() {
                         </span>
                       </td>
                       <td className="hidden lg:table-cell">
-                        {user.profile?.department || 'N/A'}
+                        {user.profile?.bio || 'N/A'}
                       </td>
                       <td className="hidden lg:table-cell">
                         {user.role === 'INSTRUCTOR' 

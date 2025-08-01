@@ -48,12 +48,12 @@ export async function PUT(
         profile: {
           upsert: {
             create: {
-              department: department || null,
-              phone: phone || null
+              phoneNumber: phone || null,
+              bio: department || null  // Using bio field to store department info
             },
             update: {
-              department: department || null,
-              phone: phone || null
+              phoneNumber: phone || null,
+              bio: department || null  // Using bio field to store department info
             }
           }
         }
@@ -61,8 +61,8 @@ export async function PUT(
       include: {
         profile: {
           select: {
-            department: true,
-            phone: true
+            bio: true,  // Contains department info
+            phoneNumber: true
           }
         },
         _count: {
