@@ -49,7 +49,7 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Teacher Effectiveness Coaching - Learning Management System
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8">
               <a href="/courses" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center mb-4">
                   <div className="bg-blue-500 rounded-lg p-3">
@@ -72,6 +72,17 @@ export default function Dashboard() {
                 </div>
                 <p className="text-gray-600">Submit and track assignments</p>
               </a>
+              <a href="/assessments" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center mb-4">
+                  <div className="bg-red-500 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-lg ml-3">Assessments</h3>
+                </div>
+                <p className="text-gray-600">Take quizzes and tests</p>
+              </a>
               <a href="/profile" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center mb-4">
                   <div className="bg-indigo-500 rounded-lg p-3">
@@ -93,6 +104,17 @@ export default function Dashboard() {
                   <h3 className="font-bold text-lg ml-3">AI Assistant</h3>
                 </div>
                 <p className="text-gray-600">Get help from AI chatbot</p>
+              </a>
+              <a href="/library" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center mb-4">
+                  <div className="bg-teal-500 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-lg ml-3">E-Library</h3>
+                </div>
+                <p className="text-gray-600">Access educational resources</p>
               </a>
               <a href="/reports" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center mb-4">
