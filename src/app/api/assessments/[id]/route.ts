@@ -22,20 +22,15 @@ export async function GET(
         isActive: true
       },
       include: {
-        module: {
+        course: {
           select: {
+            id: true,
             title: true,
-            course: {
+            code: true,
+            instructor: {
               select: {
-                id: true,
-                title: true,
-                code: true,
-                instructor: {
-                  select: {
-                    firstName: true,
-                    lastName: true
-                  }
-                }
+                firstName: true,
+                lastName: true
               }
             }
           }
@@ -47,7 +42,7 @@ export async function GET(
             score: true,
             status: true,
             startedAt: true,
-            completedAt: true,
+            submittedAt: true,
             answers: true
           },
           orderBy: {
@@ -59,9 +54,9 @@ export async function GET(
           select: {
             id: true,
             type: true,
-            question: true,
+            content: true,
             options: true,
-            points: true,
+            marks: true,
             order: true
           }
         }
@@ -76,7 +71,7 @@ export async function GET(
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         userId,
-        courseId: assessment.module.course.id
+        courseId: assessment.courseId
       }
     });
 
