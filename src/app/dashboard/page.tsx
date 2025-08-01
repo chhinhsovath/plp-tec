@@ -57,7 +57,8 @@ export default function Dashboard() {
       label: <Link href="/notifications">Notifications</Link>,
     },
     {
-      type: 'divider',
+      type: 'divider' as const,
+      key: 'divider',
     },
     {
       key: 'logout',

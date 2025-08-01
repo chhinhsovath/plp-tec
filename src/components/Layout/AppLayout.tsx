@@ -45,6 +45,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     },
     {
       type: 'divider' as const,
+      key: 'divider',
     },
     {
       key: 'logout',
