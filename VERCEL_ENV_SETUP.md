@@ -8,23 +8,23 @@ Go to: [Vercel Dashboard](https://vercel.com) → Your Project → Settings → 
 
 | Secret Name | Value |
 |------------|-------|
-| `database_url` | `postgresql://admin:P@ssw0rd@157.10.73.52:5432/plp_tec?schema=public` |
-| `nextauth_url` | `https://plp-tec.vercel.app` |
-| `nextauth_secret` | `LfJiVpFbYNDG7PnLhW3UCCRfslk8Laa2QJ1wFrXtTYI=` |
-| `openrouter_api_key` | `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` |
-| `openrouter_model` | `openai/gpt-3.5-turbo` |
+database_url =postgresql://admin:P@ssw0rd@157.10.73.52:5432/plp_tec?schema=public 
+nextauth_url = https://plp-tec.vercel.app 
+nextauth_secret = LfJiVpFbYNDG7PnLhW3UCCRfslk8Laa2QJ1wFrXtTYI= 
+openrouter_api_key = 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 
+openrouter_model = openai/gpt-3.5-turbo 
 
 ### Additional Environment Variables (Already Added):
 
 These you've already added, keep them as is:
-- EMAIL_FROM = `noreply@openplp.com`
-- UPLOAD_DIR = `./uploads`
-- MAX_FILE_SIZE = `10485760`
-- SOCKET_PORT = `3001`
-- HRMIS_API_URL = `https://tec.openplp.com/api`
-- HRMIS_API_KEY = `your-hrmis-api-key`
-- NODE_ENV = `production`
-- APP_URL = `https://plp-tec.vercel.app`
+EMAIL_FROM = noreply@openplp.com
+UPLOAD_DIR = ./uploads
+MAX_FILE_SIZE = 10485760
+SOCKET_PORT = 3001
+HRMIS_API_URL = https://tec.openplp.com/api
+HRMIS_API_KEY = your-hrmis-api-key
+NODE_ENV = production
+APP_URL = https://tec.openplp.com/
 
 ### Email Configuration (Optional - Add if needed):
 
