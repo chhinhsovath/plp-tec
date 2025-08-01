@@ -24,14 +24,32 @@ Be helpful, encouraging, and educational. Adapt your language to be clear and ac
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check for internal API key (for Telegram bot)
+    const internalApiKey = req.headers.get('x-internal-api-key');
+    const isTelegramRequest = internalApiKey === process.env.INTERNAL_API_KEY;
+    
+    let userId: string;
+    let body: any;
+    
+    if (isTelegramRequest) {
+      // For Telegram requests, get userId from request body
+      body = await req.json();
+      userId = body.userId;
+      if (!userId) {
+        return NextResponse.json({ error: "User ID required for Telegram requests" }, { status: 400 });
+      }
+    } else {
+      // Check authentication for regular requests
+      const session = await getServerSession(authOptions);
+      if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = session.user.id;
+      body = await req.json();
     }
 
     // Check if user has permission to access chat
-    const hasAccess = await canAccessChat(session.user.id);
+    const hasAccess = await canAccessChat(userId);
     if (!hasAccess) {
       return NextResponse.json(
         { error: "You don't have permission to access the chat feature" },
@@ -40,13 +58,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResult = chatRateLimit.check(req, session.user?.id);
+    const rateLimitResult = chatRateLimit.check(req, userId);
     if (!rateLimitResult.success) {
       return rateLimitResult.error!;
     }
-
-    // Parse and validate request body
-    const body = await req.json();
     const validationResult = chatMessageSchema.safeParse(body);
     
     if (!validationResult.success) {
@@ -102,17 +117,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Store chat message in database
+    const generatedSessionId = sessionId || generateSessionId();
     await prisma.chatMessage.createMany({
       data: [
         {
-          userId: session.user.id,
-          sessionId: sessionId || generateSessionId(),
+          userId: userId,
+          sessionId: generatedSessionId,
           role: 'USER',
           content: message,
         },
         {
-          userId: session.user.id,
-          sessionId: sessionId || generateSessionId(),
+          userId: userId,
+          sessionId: generatedSessionId,
           role: 'ASSISTANT',
           content: aiResponse,
         }
@@ -121,7 +137,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       response: aiResponse,
-      sessionId: sessionId || generateSessionId(),
+      sessionId: generatedSessionId,
       suggestions: generateSuggestions(message, aiResponse)
     });
 

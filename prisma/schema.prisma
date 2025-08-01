@@ -37,6 +37,7 @@ model User {
   chatMessages    ChatMessage[]
   teachingCourses Course[]  @relation("CourseInstructor")
   userRoles       UserRole[]
+  telegramAccount TelegramAccount?
   
   @@index([email])
   @@index([role])
@@ -757,4 +758,67 @@ enum InstitutionType {
   EDUCATION_MINISTRY
   REGIONAL_OFFICE
   DISTRICT_OFFICE
+}
+
+// Telegram Integration Models
+model TelegramAccount {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  telegramId      String    @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  languageCode    String?
+  isBot           Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  notifications   Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations   TelegramConversation[]
+  
+  @@index([telegramId])
+  @@index([userId])
+}
+
+model TelegramConversation {
+  id              String    @id @default(cuid())
+  telegramAccountId String
+  chatId          String
+  messageId       Int
+  role            ChatRole
+  content         String    @db.Text
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  telegramAccount TelegramAccount @relation(fields: [telegramAccountId], references: [id], onDelete: Cascade)
+  
+  @@index([telegramAccountId])
+  @@index([chatId])
+}
+
+model TelegramNotificationLog {
+  id              String    @id @default(cuid())
+  userId          String
+  telegramId      String
+  type            String
+  content         String    @db.Text
+  status          NotificationStatus
+  error           String?
+  sentAt          DateTime?
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([telegramId])
+  @@index([status])
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
 }

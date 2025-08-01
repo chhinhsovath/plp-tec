@@ -25,6 +25,7 @@ const { Title, Text } = Typography;
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
+  user?: any;
 }
 
 export default function AppLayout({ children, title }: AppLayoutProps) {
