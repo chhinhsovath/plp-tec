@@ -49,7 +49,7 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Teacher Effectiveness Coaching - Learning Management System
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
               <a href="/courses" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center mb-4">
                   <div className="bg-blue-500 rounded-lg p-3">
@@ -60,6 +60,28 @@ export default function Dashboard() {
                   <h3 className="font-bold text-lg ml-3">Courses</h3>
                 </div>
                 <p className="text-gray-600">Manage and view your courses</p>
+              </a>
+              <a href="/assignments" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center mb-4">
+                  <div className="bg-orange-500 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-lg ml-3">Assignments</h3>
+                </div>
+                <p className="text-gray-600">Submit and track assignments</p>
+              </a>
+              <a href="/profile" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center mb-4">
+                  <div className="bg-indigo-500 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-lg ml-3">Profile</h3>
+                </div>
+                <p className="text-gray-600">Manage your profile settings</p>
               </a>
               <a href="/chat" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center mb-4">
