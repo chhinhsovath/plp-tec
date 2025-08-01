@@ -68,7 +68,7 @@ export async function PUT(
         _count: {
           select: {
             enrollments: true,
-            instructedCourses: true
+            teachingCourses: true
           }
         }
       }
@@ -109,7 +109,7 @@ export async function DELETE(
         _count: {
           select: {
             enrollments: true,
-            instructedCourses: true,
+            teachingCourses: true,
             submissions: true,
             assessmentAttempts: true
           }

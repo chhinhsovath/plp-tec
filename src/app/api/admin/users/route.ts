@@ -70,7 +70,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
         _count: {
           select: {
             enrollments: true,
-            instructedCourses: true
+            teachingCourses: true
           }
         }
       },

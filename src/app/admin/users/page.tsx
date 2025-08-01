@@ -20,7 +20,7 @@ interface User {
   };
   _count: {
     enrollments: number;
-    instructedCourses: number;
+    teachingCourses: number;
   };
 }
 
@@ -316,7 +316,7 @@ export default function UserManagementPage() {
                       </td>
                       <td className="hidden lg:table-cell">
                         {user.role === 'INSTRUCTOR' 
-                          ? `${user._count.instructedCourses} courses`
+                          ? `${user._count.teachingCourses} courses`
                           : `${user._count.enrollments} enrollments`
                         }
                       </td>
