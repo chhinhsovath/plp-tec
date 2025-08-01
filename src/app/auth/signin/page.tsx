@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TelegramLogin, { TelegramUser } from '@/components/auth/telegram-login';
 import TelegramLoginInline from '@/components/auth/telegram-login-inline';
+import TelegramLoginManual from '@/components/auth/telegram-login-manual';
 import { MessageOutlined } from '@ant-design/icons';
 
 export default function SignIn() {
@@ -43,31 +44,59 @@ export default function SignIn() {
     setError('');
 
     try {
-      // First, authenticate with our API to get a JWT token
-      const response = await fetch('/api/auth/telegram', {
+      // Try direct authentication first
+      const response = await fetch('/api/auth/telegram-direct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(telegramUser),
       });
 
       if (!response.ok) {
-        throw new Error('Authentication failed');
+        const errorData = await response.json();
+        console.error('Telegram auth error:', errorData);
+        throw new Error(errorData.error || 'Authentication failed');
       }
 
-      const { token } = await response.json();
+      const data = await response.json();
+      console.log('Telegram auth response:', data);
+      
+      if (data.success && data.user) {
+        // Sign in with credentials using the Telegram user data
+        const result = await signIn('credentials', {
+          email: data.user.email,
+          password: `telegram_${telegramUser.id}_${telegramUser.hash.substring(0, 10)}`,
+          redirect: false,
+        });
 
-      // Then sign in with NextAuth using the token
-      const result = await signIn('telegram', {
-        token,
-        redirect: false,
-      });
+        if (result?.error) {
+          // If credentials fail, try the JWT approach
+          const tokenResponse = await fetch('/api/auth/telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(telegramUser),
+          });
 
-      if (result?.error) {
-        setError('Failed to sign in with Telegram');
-      } else {
-        router.push('/dashboard');
+          if (tokenResponse.ok) {
+            const tokenData = await tokenResponse.json();
+            const tokenResult = await signIn('telegram', {
+              token: tokenData.token,
+              redirect: false,
+            });
+
+            if (tokenResult?.error) {
+              setError('Failed to sign in with Telegram');
+            } else {
+              router.push('/dashboard');
+            }
+          } else {
+            setError('Authentication failed. Please try again.');
+          }
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (error) {
+      console.error('Telegram auth error:', error);
       setError('Failed to authenticate with Telegram. Please try again.');
     } finally {
       setLoading(false);
@@ -176,6 +205,11 @@ export default function SignIn() {
                   buttonSize="large"
                 />
               </div>
+            )}
+            
+            {/* Manual login fallback */}
+            {!loading && (
+              <TelegramLoginManual />
             )}
           </div>
         </form>

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, createHmac } from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { sign } from 'jsonwebtoken';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 interface TelegramAuthData {
   id: string;
@@ -21,7 +22,10 @@ function verifyTelegramAuth(authData: TelegramAuthData): boolean {
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) return false;
+  if (!botToken) {
+    console.error('TELEGRAM_BOT_TOKEN not configured');
+    return false;
+  }
 
   // Create check string
   const checkArr = [];
@@ -46,7 +50,7 @@ function verifyTelegramAuth(authData: TelegramAuthData): boolean {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('Telegram auth request:', {
+    console.log('Telegram direct auth request:', {
       ...body,
       hash: body.hash ? body.hash.substring(0, 10) + '...' : undefined
     });
@@ -75,7 +79,17 @@ export async function POST(req: NextRequest) {
     // Check if user already exists with this Telegram ID
     let telegramAccount = await prisma.telegramAccount.findUnique({
       where: { telegramId },
-      include: { user: true }
+      include: { 
+        user: {
+          include: {
+            userRoles: {
+              include: {
+                role: true
+              }
+            }
+          }
+        } 
+      }
     });
 
     let user;
@@ -98,7 +112,14 @@ export async function POST(req: NextRequest) {
       const email = body.username ? `${body.username}@telegram.user` : `${telegramId}@telegram.user`;
       
       user = await prisma.user.findUnique({
-        where: { email }
+        where: { email },
+        include: {
+          userRoles: {
+            include: {
+              role: true
+            }
+          }
+        }
       });
 
       if (!user) {
@@ -118,7 +139,7 @@ export async function POST(req: NextRequest) {
         user = await prisma.user.create({
           data: {
             email,
-            username: body.username || telegramId, // Use Telegram username or ID
+            username: body.username || telegramId,
             firstName: body.first_name,
             lastName: body.last_name || '',
             password: '', // No password for Telegram users
@@ -126,6 +147,13 @@ export async function POST(req: NextRequest) {
             userRoles: {
               create: {
                 roleId: studentRole.id
+              }
+            }
+          },
+          include: {
+            userRoles: {
+              include: {
+                role: true
               }
             }
           }
@@ -146,35 +174,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create session token
-    const secret = process.env.NEXTAUTH_SECRET;
-    if (!secret) {
-      console.error('NEXTAUTH_SECRET not configured');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
-    const token = sign(
-      { 
-        sub: user.id,
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        telegramId
-      },
-      secret,
-      { expiresIn: '7d' }
-    );
-
+    // Return user data directly for NextAuth
+    const primaryRole = user.userRoles[0]?.role;
+    
     return NextResponse.json({
       success: true,
-      token,
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName
+        name: `${user.firstName} ${user.lastName}`,
+        role: primaryRole?.name || 'STUDENT',
+        telegramId
       }
     });
 
