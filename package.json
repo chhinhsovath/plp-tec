@@ -9,8 +9,13 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset",
+    "db:verify": "tsx scripts/verify-db.ts",
+    "db:init": "tsx scripts/init-db.ts",
+    "db:setup": "npm run db:migrate:deploy && npm run db:seed"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
