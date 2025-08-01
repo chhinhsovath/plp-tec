@@ -145,7 +145,7 @@ export default function TestTelegramPage() {
             description={
               <ul className="list-disc list-inside space-y-2 mt-2">
                 <li>Domain must be set in @BotFather (Bot Settings → Domain)</li>
-                <li>Production must use HTTPS (HTTP won't work)</li>
+                <li>Production must use HTTPS (HTTP won&apos;t work)</li>
                 <li>Domain must match exactly (no www prefix unless configured)</li>
                 <li>Clear browser cache and cookies if widget was working before</li>
                 <li>Check browser console for errors</li>

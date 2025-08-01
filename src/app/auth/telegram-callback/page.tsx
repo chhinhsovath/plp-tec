@@ -23,6 +23,7 @@ export default function TelegramCallbackPage() {
     } else {
       router.push('/auth/signin');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const handleTelegramAuth = async (authData: any) => {
