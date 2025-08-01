@@ -37,27 +37,14 @@ export async function POST(
       return NextResponse.json({ error: "Resource not found or access denied" }, { status: 404 });
     }
 
-    // Increment download count
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        downloadCount: {
-          increment: 1
-        }
+    return NextResponse.json({ 
+      message: "Download tracked successfully",
+      resource: {
+        id: resource.id,
+        title: resource.title,
+        url: resource.url
       }
     });
-
-    // Log the download activity
-    await prisma.resourceActivity.create({
-      data: {
-        resourceId,
-        userId,
-        action: 'DOWNLOAD',
-        timestamp: new Date()
-      }
-    });
-
-    return NextResponse.json({ message: "Download tracked successfully" });
 
   } catch (error) {
     console.error("Error tracking download:", error);

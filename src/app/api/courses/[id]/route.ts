@@ -29,8 +29,7 @@ export async function GET(
             email: true,
             profile: {
               select: {
-                bio: true,
-                specialization: true
+                bio: true
               }
             }
           }

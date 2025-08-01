@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, message, type, actionUrl, actionText, relatedEntity } = body;
+    const { title, content, type, priority, metadata } = body;
 
     // Only admins and instructors can create system notifications
     if (session.user.role !== 'ADMIN' && session.user.role !== 'INSTRUCTOR') {
@@ -50,11 +50,10 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         title,
-        message,
+        content,
         type: type || 'INFO',
-        actionUrl,
-        actionText,
-        relatedEntity,
+        priority: priority || 'NORMAL',
+        metadata,
         isRead: false
       }
     });

@@ -16,12 +16,7 @@ export async function GET(req: NextRequest) {
         profile: true,
         _count: {
           select: {
-            enrollments: true,
-            enrollments: {
-              where: {
-                status: 'COMPLETED'
-              }
-            }
+            enrollments: true
           }
         }
       }
@@ -70,9 +65,9 @@ export async function PUT(req: NextRequest) {
       firstName,
       lastName,
       bio,
-      phone,
-      department,
-      specialization,
+      phoneNumber,
+      gender,
+      profilePhoto,
       dateOfBirth,
       address
     } = body;
@@ -93,18 +88,18 @@ export async function PUT(req: NextRequest) {
       },
       update: {
         bio,
-        phone,
-        department,
-        specialization,
+        phoneNumber,
+        gender,
+        profilePhoto,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         address
       },
       create: {
         userId: session.user.id,
         bio,
-        phone,
-        department,
-        specialization,
+        phoneNumber,
+        gender,
+        profilePhoto,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         address
       }

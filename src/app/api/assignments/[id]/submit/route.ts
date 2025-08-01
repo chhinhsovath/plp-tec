@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Check if already submitted
-    const existingSubmission = await prisma.submission.findFirst({
+    const existingSubmission = await prisma.assignmentSubmission.findFirst({
       where: {
         assignmentId,
         userId
@@ -86,12 +86,12 @@ export async function POST(
     }
 
     // Create submission
-    const submission = await prisma.submission.create({
+    const submission = await prisma.assignmentSubmission.create({
       data: {
         assignmentId,
         userId,
         content: content.trim(),
-        attachments: attachments.length > 0 ? attachments : null,
+        attachmentUrl: attachments.length > 0 ? attachments[0] : null,
         submittedAt: new Date(),
         status: 'SUBMITTED'
       }

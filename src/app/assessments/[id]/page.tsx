@@ -105,14 +105,14 @@ export default function AssessmentDetailPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
+    const statusConfig: Record<string, { class: string; text: string }> = {
       'not-started': { class: 'badge-neutral', text: 'Not Started' },
       'in-progress': { class: 'badge-warning', text: 'In Progress' },
       'passed': { class: 'badge-success', text: 'Passed' },
       'failed': { class: 'badge-error', text: 'Failed' }
     };
     
-    const config = statusConfig[status];
+    const config = statusConfig[status] || { class: 'badge-neutral', text: 'Unknown' };
     return <span className={`badge ${config.class}`}>{config.text}</span>;
   };
 

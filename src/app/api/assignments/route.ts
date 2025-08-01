@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             submittedAt: true,
-            grade: true,
+            score: true,
             feedback: true,
             status: true
           }

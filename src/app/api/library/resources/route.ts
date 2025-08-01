@@ -45,9 +45,9 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Get category counts
-    const categoryStats = await prisma.resource.groupBy({
-      by: ['category'],
+    // Get type counts
+    const typeStats = await prisma.resource.groupBy({
+      by: ['type'],
       where: {
         OR: [
           { isPublic: true },
@@ -59,27 +59,26 @@ export async function GET(req: NextRequest) {
         ]
       },
       _count: {
-        category: true
+        type: true
       }
     });
 
-    // Map categories with icons
-    const categoryIcons: Record<string, string> = {
-      'Textbooks': '📚',
-      'Lectures': '🎥',
-      'References': '📄',
-      'Exercises': '✏️',
-      'Multimedia': '🎬',
-      'Software': '💻',
-      'Templates': '📋',
-      'Research': '🔬',
-      'General': '📂'
+    // Map types with icons
+    const typeIcons: Record<string, string> = {
+      'DOCUMENT': '📄',
+      'VIDEO': '🎥',
+      'AUDIO': '🎵',
+      'IMAGE': '🖼️',
+      'PRESENTATION': '📊',
+      'SPREADSHEET': '📈',
+      'ARCHIVE': '🗜️',
+      'OTHER': '📎'
     };
 
-    const categories = categoryStats.map(stat => ({
-      name: stat.category,
-      count: stat._count.category,
-      icon: categoryIcons[stat.category] || '📂'
+    const categories = typeStats.map(stat => ({
+      name: stat.type,
+      count: stat._count.type,
+      icon: typeIcons[stat.type] || '📂'
     }));
 
     return NextResponse.json({

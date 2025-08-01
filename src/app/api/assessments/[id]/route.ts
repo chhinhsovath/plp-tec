@@ -42,8 +42,7 @@ export async function GET(
             score: true,
             status: true,
             startedAt: true,
-            submittedAt: true,
-            answers: true
+            submittedAt: true
           },
           orderBy: {
             startedAt: 'desc'

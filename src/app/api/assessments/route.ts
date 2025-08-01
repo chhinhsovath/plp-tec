@@ -23,24 +23,16 @@ export async function GET(req: NextRequest) {
     // Get assessments from enrolled courses
     const assessments = await prisma.assessment.findMany({
       where: {
-        module: {
-          courseId: {
-            in: courseIds
-          },
-          isPublished: true
+        courseId: {
+          in: courseIds
         },
         isActive: true
       },
       include: {
-        module: {
+        course: {
           select: {
             title: true,
-            course: {
-              select: {
-                title: true,
-                code: true
-              }
-            }
+            code: true
           }
         },
         attempts: {
@@ -50,7 +42,7 @@ export async function GET(req: NextRequest) {
             score: true,
             status: true,
             startedAt: true,
-            completedAt: true
+            submittedAt: true
           },
           orderBy: {
             startedAt: 'desc'
@@ -58,7 +50,7 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: {
-        dueDate: 'asc'
+        endDateTime: 'asc'
       }
     });
 

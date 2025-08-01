@@ -23,19 +23,14 @@ export async function GET(
         isActive: true
       },
       include: {
-        module: {
-          select: {
-            courseId: true
-          }
-        },
         questions: {
           orderBy: { order: 'asc' },
           select: {
             id: true,
             type: true,
-            question: true,
+            content: true,
             options: true,
-            points: true,
+            marks: true,
             order: true
           }
         }
@@ -50,7 +45,7 @@ export async function GET(
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         userId,
-        courseId: assessment.module.courseId
+        courseId: assessment.courseId
       }
     });
 
@@ -59,7 +54,7 @@ export async function GET(
     }
 
     // Check if assessment is still available
-    if (new Date() > assessment.dueDate) {
+    if (assessment.endDateTime && new Date() > assessment.endDateTime) {
       return NextResponse.json({ error: "Assessment deadline has passed" }, { status: 400 });
     }
 
@@ -77,7 +72,7 @@ export async function GET(
       where: {
         assessmentId,
         userId,
-        status: 'COMPLETED'
+        status: 'GRADED'
       }
     });
 
@@ -90,13 +85,30 @@ export async function GET(
       const startedAt = new Date(existingAttempt.startedAt);
       const now = new Date();
       const elapsedMinutes = Math.floor((now.getTime() - startedAt.getTime()) / 60000);
-      const timeRemainingMinutes = Math.max(0, assessment.duration - elapsedMinutes);
+      const timeRemainingMinutes = assessment.duration ? Math.max(0, assessment.duration - elapsedMinutes) : null;
+      
+      // Load existing answers
+      const existingAnswers = await prisma.answer.findMany({
+        where: { attemptId: existingAttempt.id },
+        select: {
+          questionId: true,
+          answer: true
+        }
+      });
+      
+      // Convert to object format
+      const answersObj: Record<string, string> = {};
+      existingAnswers.forEach(ans => {
+        if (ans.answer) {
+          answersObj[ans.questionId] = ans.answer;
+        }
+      });
       
       attemptData = {
         id: existingAttempt.id,
         startedAt: existingAttempt.startedAt,
-        timeRemaining: timeRemainingMinutes * 60, // Convert to seconds
-        answers: existingAttempt.answers || {}
+        timeRemaining: timeRemainingMinutes ? timeRemainingMinutes * 60 : null, // Convert to seconds
+        answers: answersObj
       };
     }
 
@@ -105,7 +117,7 @@ export async function GET(
         id: assessment.id,
         title: assessment.title,
         duration: assessment.duration,
-        totalQuestions: assessment.totalQuestions,
+        totalQuestions: assessment.questions.length,
         questions: assessment.questions
       },
       attempt: attemptData

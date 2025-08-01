@@ -27,6 +27,7 @@ export async function GET(
             title: true,
             course: {
               select: {
+                id: true,
                 title: true,
                 code: true,
                 instructor: {
@@ -44,9 +45,9 @@ export async function GET(
           select: {
             id: true,
             content: true,
-            attachments: true,
+            attachmentUrl: true,
             submittedAt: true,
-            grade: true,
+            score: true,
             feedback: true,
             status: true
           }

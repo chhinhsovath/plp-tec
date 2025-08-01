@@ -32,8 +32,9 @@ export async function GET(req: NextRequest) {
             },
             _count: {
               select: {
-                assignments: true,
-                assessments: true
+                modules: true,
+                assessments: true,
+                enrollments: true
               }
             }
           }
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Get assignments data
-    const assignments = await prisma.submission.findMany({
+    const assignments = await prisma.assignmentSubmission.findMany({
       where: {
         userId,
         assignment: {
@@ -78,11 +79,9 @@ export async function GET(req: NextRequest) {
       where: {
         userId,
         assessment: {
-          module: {
-            course: {
-              enrollments: {
-                some: { userId }
-              }
+          course: {
+            enrollments: {
+              some: { userId }
             }
           }
         }
@@ -90,15 +89,11 @@ export async function GET(req: NextRequest) {
       include: {
         assessment: {
           select: {
-            passingScore: true,
-            module: {
+            passingMarks: true,
+            course: {
               select: {
-                course: {
-                  select: {
-                    title: true,
-                    code: true
-                  }
-                }
+                title: true,
+                code: true
               }
             }
           }
@@ -110,10 +105,10 @@ export async function GET(req: NextRequest) {
     const totalCourses = enrollments.length;
     const completedCourses = enrollments.filter(e => e.progress >= 100).length;
     const totalAssignments = assignments.length;
-    const completedAssignments = assignments.filter(a => a.status === 'COMPLETED').length;
-    const totalAssessments = assessments.filter(a => a.status === 'COMPLETED').length;
+    const completedAssignments = assignments.filter(a => a.status === 'GRADED').length;
+    const totalAssessments = assessments.filter(a => a.status === 'GRADED').length;
     const passedAssessments = assessments.filter(a => 
-      a.status === 'COMPLETED' && a.score >= a.assessment.passingScore
+      a.status === 'GRADED' && a.score && a.score >= a.assessment.passingMarks
     ).length;
     const overallProgress = enrollments.length > 0 
       ? enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length 
@@ -130,7 +125,7 @@ export async function GET(req: NextRequest) {
       progress: enrollment.progress,
       completedModules: Math.floor((enrollment.progress / 100) * enrollment.course.modules.length),
       totalModules: enrollment.course.modules.length,
-      lastAccessed: enrollment.lastAccessedAt?.toISOString() || enrollment.enrolledAt.toISOString(),
+      lastAccessed: enrollment.enrolledAt.toISOString(),
       instructor: `${enrollment.course.instructor.firstName} ${enrollment.course.instructor.lastName}`
     }));
 
@@ -141,22 +136,22 @@ export async function GET(req: NextRequest) {
         type: 'ASSIGNMENT_SUBMIT' as const,
         title: `Assignment Submitted`,
         description: `Submitted assignment for ${assignment.assignment.module.course.title}`,
-        timestamp: assignment.submittedAt?.toISOString() || assignment.createdAt.toISOString(),
-        score: assignment.grade || undefined
+        timestamp: assignment.submittedAt.toISOString(),
+        score: assignment.score || undefined
       })),
       ...assessments.slice(-5).map(assessment => ({
         id: assessment.id,
         type: 'ASSESSMENT_COMPLETE' as const,
         title: `Assessment Completed`,
-        description: `Completed assessment for ${assessment.assessment.module.course.title}`,
-        timestamp: assessment.completedAt?.toISOString() || assessment.startedAt.toISOString(),
+        description: `Completed assessment for ${assessment.assessment.course.title}`,
+        timestamp: assessment.submittedAt?.toISOString() || assessment.startedAt.toISOString(),
         score: assessment.score || undefined
       }))
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10);
 
     // Get upcoming deadlines (mock data - replace with real assignment/assessment due dates)
     const upcomingDeadlines = [
-      ...assignments.filter(a => a.status !== 'COMPLETED').slice(0, 3).map(assignment => ({
+      ...assignments.filter(a => a.status !== 'GRADED').slice(0, 3).map(assignment => ({
         id: assignment.id,
         type: 'ASSIGNMENT' as const,
         title: `Assignment Due`,
@@ -164,11 +159,11 @@ export async function GET(req: NextRequest) {
         dueDate: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
         priority: 'HIGH' as const
       })),
-      ...assessments.filter(a => a.status !== 'COMPLETED').slice(0, 3).map(assessment => ({
+      ...assessments.filter(a => a.status !== 'GRADED').slice(0, 3).map(assessment => ({
         id: assessment.id,
         type: 'ASSESSMENT' as const,
         title: `Assessment Due`,
-        course: assessment.assessment.module.course.title,
+        course: assessment.assessment.course.title,
         dueDate: new Date(Date.now() + Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString(),
         priority: 'MEDIUM' as const
       }))
