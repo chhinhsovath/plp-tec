@@ -1,0 +1,590 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  username        String    @unique
+  password        String
+  firstName       String
+  lastName        String
+  role            UserRole  @default(STUDENT)
+  isActive        Boolean   @default(true)
+  emailVerified   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  profile         Profile?
+  enrollments     Enrollment[]
+  submissions     AssignmentSubmission[]
+  assessmentAttempts AssessmentAttempt[]
+  messages        Message[]
+  notifications   Notification[]
+  progressRecords LearningProgress[]
+  attendances     Attendance[]
+  resourceAccess  ResourceAccess[]
+  chatMessages    ChatMessage[]
+  teachingCourses Course[]  @relation("CourseInstructor")
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Profile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  phoneNumber     String?
+  address         String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  profilePhoto    String?
+  bio             String?
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+// Course Management
+model Course {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  title           String
+  description     String?
+  credits         Int
+  duration        Int       // in weeks
+  category        CourseCategory
+  level           CourseLevel
+  prerequisites   String[]
+  isActive        Boolean   @default(true)
+  startDate       DateTime?
+  endDate         DateTime?
+  maxStudents     Int       @default(50)
+  instructorId    String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  instructor      User      @relation("CourseInstructor", fields: [instructorId], references: [id])
+  modules         Module[]
+  enrollments     Enrollment[]
+  assessments     Assessment[]
+  resources       Resource[]
+  announcements   Announcement[]
+  
+  @@index([instructorId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model Module {
+  id              String    @id @default(cuid())
+  courseId        String
+  title           String
+  description     String?
+  order           Int
+  estimatedHours  Float
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons         Lesson[]
+  assignments     Assignment[]
+  
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model Lesson {
+  id              String    @id @default(cuid())
+  moduleId        String
+  title           String
+  content         String    @db.Text
+  videoUrl        String?
+  duration        Int?      // in minutes
+  order           Int
+  isPublished     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  module          Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  resources       Resource[]
+  progress        LearningProgress[]
+  
+  @@unique([moduleId, order])
+  @@index([moduleId])
+}
+
+// Assessment System
+model Assessment {
+  id              String    @id @default(cuid())
+  courseId        String
+  title           String
+  description     String?
+  type            AssessmentType
+  totalMarks      Float
+  passingMarks    Float
+  duration        Int?      // in minutes
+  startDateTime   DateTime?
+  endDateTime     DateTime?
+  isActive        Boolean   @default(true)
+  shuffleQuestions Boolean  @default(false)
+  showResults     Boolean   @default(false)
+  maxAttempts     Int       @default(1)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  attempts        AssessmentAttempt[]
+  
+  @@index([courseId])
+  @@index([type])
+}
+
+model Question {
+  id              String    @id @default(cuid())
+  assessmentId    String
+  content         String    @db.Text
+  type            QuestionType
+  options         Json?     // For multiple choice questions
+  correctAnswer   String?
+  marks           Float
+  order           Int
+  explanation     String?
+  
+  // Relations
+  assessment      Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  answers         Answer[]
+  
+  @@unique([assessmentId, order])
+  @@index([assessmentId])
+}
+
+model AssessmentAttempt {
+  id              String    @id @default(cuid())
+  assessmentId    String
+  userId          String
+  attemptNumber   Int
+  startedAt       DateTime  @default(now())
+  submittedAt     DateTime?
+  score           Float?
+  percentage      Float?
+  status          AttemptStatus @default(IN_PROGRESS)
+  timeTaken       Int?      // in seconds
+  
+  // Relations
+  assessment      Assessment @relation(fields: [assessmentId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+  answers         Answer[]
+  
+  @@unique([assessmentId, userId, attemptNumber])
+  @@index([assessmentId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Answer {
+  id              String    @id @default(cuid())
+  attemptId       String
+  questionId      String
+  answer          String?   @db.Text
+  isCorrect       Boolean?
+  marksAwarded    Float?
+  answeredAt      DateTime  @default(now())
+  
+  // Relations
+  attempt         AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question        Question  @relation(fields: [questionId], references: [id])
+  
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// Assignment System
+model Assignment {
+  id              String    @id @default(cuid())
+  moduleId        String
+  title           String
+  description     String    @db.Text
+  attachmentUrl   String?
+  maxScore        Float
+  dueDate         DateTime
+  isPublished     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  module          Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submissions     AssignmentSubmission[]
+  
+  @@index([moduleId])
+  @@index([dueDate])
+}
+
+model AssignmentSubmission {
+  id              String    @id @default(cuid())
+  assignmentId    String
+  userId          String
+  content         String?   @db.Text
+  attachmentUrl   String?
+  submittedAt     DateTime  @default(now())
+  score           Float?
+  feedback        String?   @db.Text
+  gradedAt        DateTime?
+  gradedBy        String?
+  status          SubmissionStatus @default(SUBMITTED)
+  
+  // Relations
+  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@unique([assignmentId, userId])
+  @@index([assignmentId])
+  @@index([userId])
+  @@index([status])
+}
+
+// E-Library & Resources
+model Resource {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  type            ResourceType
+  url             String?
+  fileSize        BigInt?
+  mimeType        String?
+  thumbnail       String?
+  courseId        String?
+  lessonId        String?
+  tags            String[]
+  isPublic        Boolean   @default(false)
+  uploadedBy      String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  course          Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  lesson          Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  accesses        ResourceAccess[]
+  
+  @@index([courseId])
+  @@index([lessonId])
+  @@index([type])
+  @@index([isPublic])
+}
+
+model ResourceAccess {
+  id              String    @id @default(cuid())
+  resourceId      String
+  userId          String
+  accessedAt      DateTime  @default(now())
+  duration        Int?      // in seconds
+  
+  // Relations
+  resource        Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([resourceId])
+  @@index([userId])
+  @@index([accessedAt])
+}
+
+// Communication
+model Message {
+  id              String    @id @default(cuid())
+  senderId        String
+  recipientId     String?
+  courseId        String?
+  subject         String?
+  content         String    @db.Text
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  sender          User      @relation(fields: [senderId], references: [id])
+  
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([courseId])
+  @@index([isRead])
+}
+
+model Announcement {
+  id              String    @id @default(cuid())
+  courseId        String
+  title           String
+  content         String    @db.Text
+  priority        AnnouncementPriority @default(NORMAL)
+  publishedAt     DateTime  @default(now())
+  expiresAt       DateTime?
+  createdBy       String
+  
+  // Relations
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@index([courseId])
+  @@index([publishedAt])
+  @@index([priority])
+}
+
+// AI Chatbot
+model ChatMessage {
+  id              String    @id @default(cuid())
+  userId          String
+  sessionId       String
+  role            ChatRole
+  content         String    @db.Text
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// Tracking & Analytics
+model LearningProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  lessonId        String
+  completed       Boolean   @default(false)
+  completedAt     DateTime?
+  timeSpent       Int       @default(0) // in seconds
+  lastAccessedAt  DateTime  @default(now())
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  lesson          Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@index([completed])
+}
+
+model Enrollment {
+  id              String    @id @default(cuid())
+  userId          String
+  courseId        String
+  enrolledAt      DateTime  @default(now())
+  completedAt     DateTime?
+  progress        Float     @default(0)
+  status          EnrollmentStatus @default(ACTIVE)
+  grade           String?
+  certificateUrl  String?
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  course          Course    @relation(fields: [courseId], references: [id])
+  attendances     Attendance[]
+  
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model Attendance {
+  id              String    @id @default(cuid())
+  enrollmentId    String
+  userId          String
+  date            DateTime
+  status          AttendanceStatus
+  checkInTime     DateTime?
+  checkOutTime    DateTime?
+  duration        Int?      // in minutes
+  ipAddress       String?
+  deviceInfo      String?
+  
+  // Relations
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@unique([enrollmentId, date])
+  @@index([enrollmentId])
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+model Notification {
+  id              String    @id @default(cuid())
+  userId          String
+  title           String
+  content         String
+  type            NotificationType
+  priority        NotificationPriority @default(NORMAL)
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Analytics & Reports
+model AnalyticsEvent {
+  id              String    @id @default(cuid())
+  userId          String?
+  eventType       String
+  eventCategory   String
+  eventAction     String
+  eventLabel      String?
+  eventValue      Float?
+  metadata        Json?
+  sessionId       String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([eventCategory])
+  @@index([createdAt])
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+  GUEST
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CourseCategory {
+  PEDAGOGY
+  SUBJECT_KNOWLEDGE
+  ICT_SKILLS
+  CLASSROOM_MANAGEMENT
+  ASSESSMENT
+  PROFESSIONAL_DEVELOPMENT
+  OTHER
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AssessmentType {
+  QUIZ
+  MIDTERM
+  FINAL
+  ASSIGNMENT
+  PROJECT
+  PRACTICAL
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILL_BLANK
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+  EXPIRED
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADING
+  GRADED
+  RETURNED
+  RESUBMITTED
+}
+
+enum ResourceType {
+  DOCUMENT
+  VIDEO
+  AUDIO
+  IMAGE
+  PRESENTATION
+  SPREADSHEET
+  EBOOK
+  LINK
+  OTHER
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AnnouncementPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  SYSTEM
+  COURSE
+  ASSIGNMENT
+  ASSESSMENT
+  MESSAGE
+  ANNOUNCEMENT
+  REMINDER
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
