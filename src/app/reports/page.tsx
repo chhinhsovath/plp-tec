@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 interface Analytics {
@@ -29,13 +29,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('week');
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    if (!session) router.push('/auth/signin');
-    else fetchAnalytics();
-  }, [session, status, router, timeRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const response = await fetch(`/api/analytics?range=${timeRange}`);
       if (response.ok) {
@@ -47,7 +41,13 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session) router.push('/auth/signin');
+    else fetchAnalytics();
+  }, [session, status, router, fetchAnalytics]);
 
   if (status === 'loading' || loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;

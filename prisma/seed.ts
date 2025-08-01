@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, CourseCategory, CourseLevel, ResourceType } from '@prisma/client'
+import { PrismaClient, SystemRole, CourseCategory, CourseLevel, ResourceType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -19,7 +19,7 @@ async function main() {
       password: adminPassword,
       firstName: 'Chhinh',
       lastName: 'Sovath',
-      role: UserRole.ADMIN,
+      role: SystemRole.ADMIN,
       emailVerified: new Date(),
       profile: {
         create: {
@@ -40,7 +40,7 @@ async function main() {
       password: adminPassword,
       firstName: 'System',
       lastName: 'Administrator',
-      role: UserRole.ADMIN,
+      role: SystemRole.ADMIN,
       emailVerified: new Date(),
       profile: {
         create: {
@@ -63,7 +63,7 @@ async function main() {
         password: instructorPassword,
         firstName: 'John',
         lastName: 'Smith',
-        role: UserRole.INSTRUCTOR,
+        role: SystemRole.INSTRUCTOR,
         emailVerified: new Date(),
         profile: {
           create: {
@@ -81,7 +81,7 @@ async function main() {
         password: instructorPassword,
         firstName: 'Sarah',
         lastName: 'Johnson',
-        role: UserRole.INSTRUCTOR,
+        role: SystemRole.INSTRUCTOR,
         emailVerified: new Date(),
         profile: {
           create: {
@@ -105,7 +105,7 @@ async function main() {
           password: studentPassword,
           firstName: `Student`,
           lastName: `${i + 1}`,
-          role: UserRole.STUDENT,
+          role: SystemRole.STUDENT,
           emailVerified: new Date(),
         },
       })

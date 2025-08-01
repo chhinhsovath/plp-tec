@@ -3,7 +3,12 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
+import { Card, Input, Button, Space, Typography, Spin, Avatar, Upload, message, Empty } from 'antd';
+import { SendOutlined, PictureOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons';
+import AppLayout from '@/components/Layout/AppLayout';
+
+const { TextArea } = Input;
+const { Text, Title } = Typography;
 
 interface Message {
   id: string;
@@ -73,11 +78,13 @@ export default function ChatPage() {
         };
         setMessages(prev => [...prev, assistantMessage]);
         setImageUrl('');
+        setShowImageInput(false);
       } else {
-        console.error('Error:', data.error);
+        message.error(data.error || 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      message.error('Failed to send message');
     } finally {
       setLoading(false);
     }
@@ -91,145 +98,157 @@ export default function ChatPage() {
   };
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Navigation */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-semibold">
-                PLP TEC LMS
-              </Link>
-              <span className="ml-8 text-gray-600">AI Assistant</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                Dashboard
-              </Link>
-              <span className="text-gray-700">Welcome, {session?.user?.email}</span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Chat Container */}
-      <div className="flex-1 max-w-4xl mx-auto w-full p-4">
-        <div className="bg-white rounded-lg shadow-lg h-full flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+    <AppLayout title="AI Assistant">
+      <Card className="h-[calc(100vh-200px)]">
+        <div className="flex flex-col h-full">
           {/* Chat Header */}
-          <div className="border-b p-4">
-            <h2 className="text-xl font-semibold">AI Learning Assistant</h2>
-            <p className="text-sm text-gray-600">Ask questions about pedagogy, teaching methods, or get help with your courses</p>
+          <div className="border-b pb-4 mb-4">
+            <Title level={4} className="!mb-1">AI Learning Assistant</Title>
+            <Text type="secondary">Ask questions about pedagogy, teaching methods, or get help with your courses</Text>
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p className="mb-4">👋 Hello! I&apos;m your AI learning assistant.</p>
-                <p className="text-sm">I can help you with:</p>
-                <ul className="text-sm mt-2 space-y-1">
-                  <li>• Understanding educational concepts</li>
-                  <li>• Teaching strategies and methods</li>
-                  <li>• Course content questions</li>
-                  <li>• Study tips and learning techniques</li>
-                </ul>
-              </div>
-            )}
-
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-800'
-                  }`}
-                >
-                  {message.imageUrl && message.role === 'user' && (
-                    <div className="relative w-full h-48 mb-2">
-                      <img 
-                        src={message.imageUrl} 
-                        alt="User uploaded image" 
-                        className="object-contain w-full h-full rounded"
-                      />
+          <div className="flex-1 overflow-y-auto mb-4">
+            {messages.length === 0 ? (
+              <Empty
+                image={<RobotOutlined style={{ fontSize: 48, color: '#1890ff' }} />}
+                description={
+                  <div>
+                    <Text>Hello! I&apos;m your AI learning assistant.</Text>
+                    <div className="mt-4 text-left max-w-md mx-auto">
+                      <Text type="secondary">I can help you with:</Text>
+                      <ul className="mt-2 space-y-1">
+                        <li>• Understanding educational concepts</li>
+                        <li>• Teaching strategies and methods</li>
+                        <li>• Course content questions</li>
+                        <li>• Study tips and learning techniques</li>
+                      </ul>
                     </div>
-                  )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
-                  }`}>
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
-                </div>
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`flex gap-3 max-w-[70%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <Avatar
+                        icon={message.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+                        className={message.role === 'user' ? 'bg-blue-500' : 'bg-green-500'}
+                      />
+                      <div>
+                        <Card
+                          className={message.role === 'user' ? 'bg-blue-50' : 'bg-gray-50'}
+                          bodyStyle={{ padding: '12px 16px' }}
+                        >
+                          {message.imageUrl && message.role === 'user' && (
+                            <div className="mb-2">
+                              <img 
+                                src={message.imageUrl} 
+                                alt="User uploaded image" 
+                                className="max-w-full h-auto rounded"
+                                style={{ maxHeight: '200px' }}
+                              />
+                            </div>
+                          )}
+                          <Text>{message.content}</Text>
+                        </Card>
+                        <Text type="secondary" className="text-xs mt-1 block">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="flex gap-3 max-w-[70%]">
+                      <Avatar icon={<RobotOutlined />} className="bg-green-500" />
+                      <Card className="bg-gray-50" bodyStyle={{ padding: '12px 16px' }}>
+                        <Space>
+                          <Spin size="small" />
+                          <Text type="secondary">Thinking...</Text>
+                        </Space>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
             )}
-
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Container */}
-          <div className="border-t p-4">
+          <div className="border-t pt-4">
             {showImageInput && (
-              <div className="mb-3">
-                <input
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="Enter image URL for analysis..."
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <Input
+                placeholder="Enter image URL for analysis..."
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="mb-3"
+                prefix={<PictureOutlined />}
+                suffix={
+                  <Button
+                    type="text"
+                    size="small"
+                    onClick={() => {
+                      setImageUrl('');
+                      setShowImageInput(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                }
+              />
             )}
-            <div className="flex space-x-4">
-              <textarea
+            
+            <div className="flex gap-2">
+              <TextArea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your question here..."
-                className="flex-1 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
+                autoSize={{ minRows: 1, maxRows: 4 }}
                 disabled={loading}
+                className="flex-1"
               />
-              <button
-                onClick={() => setShowImageInput(!showImageInput)}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                title="Add image for analysis"
-              >
-                🖼️
-              </button>
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || loading}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Send
-              </button>
+              <Space direction="vertical">
+                <Button
+                  icon={<PictureOutlined />}
+                  onClick={() => setShowImageInput(!showImageInput)}
+                  title="Add image for analysis"
+                />
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={sendMessage}
+                  disabled={!input.trim() || loading}
+                  loading={loading}
+                >
+                  Send
+                </Button>
+              </Space>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            
+            <Text type="secondary" className="text-xs mt-2 block">
               Press Enter to send, Shift+Enter for new line
-            </p>
+            </Text>
           </div>
         </div>
-      </div>
-    </div>
+      </Card>
+    </AppLayout>
   );
 }
