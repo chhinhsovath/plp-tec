@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
             name: decoded.name,
             role: primaryRole?.name || 'STUDENT',
             telegramId: decoded.telegramId
-          };
+          } as any;
         } catch (error) {
           console.error("Telegram auth error:", error);
           return null;
@@ -108,7 +108,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.telegramId = user.telegramId;
+        if (user.telegramId) {
+          token.telegramId = user.telegramId;
+        }
       }
       return token;
     },
@@ -116,7 +118,9 @@ export const authOptions: NextAuthOptions = {
       if (session?.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
-        session.user.telegramId = token.telegramId as string;
+        if (token.telegramId) {
+          (session.user as any).telegramId = token.telegramId as string;
+        }
       }
       return session;
     },

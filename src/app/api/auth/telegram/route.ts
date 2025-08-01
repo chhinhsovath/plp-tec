@@ -113,6 +113,7 @@ export async function POST(req: NextRequest) {
         user = await prisma.user.create({
           data: {
             email,
+            username: body.username || telegramId, // Use Telegram username or ID
             firstName: body.first_name,
             lastName: body.last_name || '',
             password: '', // No password for Telegram users
