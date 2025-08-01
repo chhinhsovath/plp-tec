@@ -49,7 +49,7 @@ export async function POST(
     let earnedPoints = 0;
 
     for (const question of attempt.assessment.questions) {
-      totalPoints += question.points;
+      totalPoints += question.marks;
       
       const userAnswer = answers[question.id];
       if (userAnswer) {
@@ -68,12 +68,12 @@ export async function POST(
           case 'ESSAY':
             // Essays need manual grading - for now, give partial credit
             isCorrect = userAnswer.trim().length > 50; // Basic length check
-            earnedPoints += isCorrect ? question.points * 0.8 : 0; // 80% credit for effort
+            earnedPoints += isCorrect ? question.marks * 0.8 : 0; // 80% credit for effort
             continue;
         }
         
         if (isCorrect) {
-          earnedPoints += question.points;
+          earnedPoints += question.marks;
         }
       }
     }
@@ -82,17 +82,29 @@ export async function POST(
     const completedAt = new Date();
     const timeSpent = Math.floor((completedAt.getTime() - new Date(attempt.startedAt).getTime()) / 1000);
 
+    // Save the answers
+    if (answers && Object.keys(answers).length > 0) {
+      const answerRecords = Object.entries(answers).map(([questionId, answer]) => ({
+        attemptId,
+        questionId,
+        answer: answer as string,
+      }));
+
+      await prisma.answer.createMany({
+        data: answerRecords,
+        skipDuplicates: true
+      });
+    }
+
     // Update the attempt
     await prisma.assessmentAttempt.update({
       where: { id: attemptId },
       data: {
-        answers: answers || {},
-        score: score,
-        totalPoints: totalPoints,
-        earnedPoints: earnedPoints,
-        completedAt: completedAt,
-        timeSpent: timeSpent,
-        status: 'COMPLETED'
+        score: earnedPoints,
+        percentage: score,
+        submittedAt: completedAt,
+        timeTaken: timeSpent,
+        status: 'SUBMITTED'
       }
     });
 
