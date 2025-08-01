@@ -32,22 +32,27 @@ Go to your Vercel project settings → Environment Variables and add:
 
 ### Required Environment Variables:
 
+⚠️ **IMPORTANT**: In Vercel, you need to add these as "Secrets" not regular environment variables for sensitive data.
+
+1. Go to your project in Vercel Dashboard
+2. Navigate to Settings → Environment Variables
+3. Add each variable below (use the names exactly as shown):
+
 ```bash
-# Database
-DATABASE_URL="postgresql://admin:P@ssw0rd@157.10.73.52:5432/plp_tec?schema=public"
+# Database (Add as Secret)
+database_url - Your PostgreSQL connection string
+Example format: postgresql://username:password@host:port/database?sslmode=require
 
-# Authentication (IMPORTANT: Use the generated JWT secret below)
-NEXTAUTH_URL="https://your-app-name.vercel.app"
-NEXTAUTH_SECRET="KmZ8Q2hF9Bw5tK7xN3pR6vY4aL1eJ0dS8gU2mC5nW9qA7zX4bT6yH3fE8rV1jM0o"
+# Authentication (Add as Secret)
+nextauth_url - Your deployment URL (e.g., https://your-app.vercel.app)
+nextauth_secret - Generate with: openssl rand -base64 32
 
-# AI Chatbot
-OPENROUTER_API_KEY="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"
-OPENROUTER_MODEL="openai/gpt-3.5-turbo"
-
-# Application
-NODE_ENV="production"
-APP_URL="https://your-app-name.vercel.app"
+# AI Chatbot (Add as Secret)
+openrouter_api_key - Your OpenRouter API key from https://openrouter.ai/
+openrouter_model - Model to use (e.g., openai/gpt-3.5-turbo)
 ```
+
+**Note**: The variable names in Vercel should be lowercase (e.g., `database_url` not `DATABASE_URL`) because vercel.json references them with `@database_url` syntax.
 
 ### Optional Environment Variables:
 
@@ -94,18 +99,21 @@ npx prisma db seed
 
 ## Important Security Notes
 
-### JWT Secret (Already Generated)
-Your secure JWT secret for production:
-```
-KmZ8Q2hF9Bw5tK7xN3pR6vY4aL1eJ0dS8gU2mC5nW9qA7zX4bT6yH3fE8rV1jM0o
-```
+### Generate JWT Secret
+You need to generate a secure JWT secret for production. Use this command:
 
-This is a cryptographically secure 64-character secret. Keep it safe and never commit it to your repository.
-
-### Generate New JWT Secret (if needed)
 ```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 64))"
+# Generate a secure 32-byte secret
+openssl rand -base64 32
+
+# Or use Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
+
+⚠️ **IMPORTANT**: 
+- Never commit secrets to your repository
+- Keep your JWT secret safe and secure
+- Use different secrets for different environments (development, staging, production)
 
 ## Step 6: Post-Deployment Checklist
 
