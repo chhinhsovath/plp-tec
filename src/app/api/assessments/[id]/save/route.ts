@@ -33,12 +33,32 @@ export async function POST(
       return NextResponse.json({ error: "Attempt not found or not in progress" }, { status: 404 });
     }
 
-    // Update the attempt with current answers
+    // Save/update answers
+    if (answers && typeof answers === 'object') {
+      // Delete existing answers and create new ones
+      await prisma.answer.deleteMany({
+        where: { attemptId }
+      });
+
+      // Create new answer records
+      const answerRecords = Object.entries(answers).map(([questionId, answer]) => ({
+        attemptId,
+        questionId,
+        answer: answer as string,
+      }));
+
+      if (answerRecords.length > 0) {
+        await prisma.answer.createMany({
+          data: answerRecords
+        });
+      }
+    }
+
+    // Update the attempt's updatedAt timestamp
     await prisma.assessmentAttempt.update({
       where: { id: attemptId },
       data: {
-        answers: answers || {},
-        lastSavedAt: new Date()
+        // This will automatically update the updatedAt field
       }
     });
 
