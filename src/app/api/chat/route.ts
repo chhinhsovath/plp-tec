@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { chatMessageSchema } from "@/lib/validations";
+import { chatRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // OpenRouter configuration
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -25,14 +28,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message, sessionId } = await req.json();
+    // Apply rate limiting
+    const rateLimitResult = chatRateLimit.check(req, session.user?.id);
+    if (!rateLimitResult.success) {
+      return rateLimitResult.error!;
+    }
 
-    if (!message) {
+    // Parse and validate request body
+    const body = await req.json();
+    const validationResult = chatMessageSchema.safeParse(body);
+    
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Message is required" },
+        { 
+          error: "Invalid request data",
+          errors: validationResult.error.issues 
+        },
         { status: 400 }
       );
     }
+
+    const { message, sessionId } = validationResult.data;
 
     let aiResponse: string;
 
