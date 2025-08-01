@@ -21,13 +21,6 @@ export async function POST(
       where: { 
         id: assessmentId,
         isActive: true
-      },
-      include: {
-        module: {
-          select: {
-            courseId: true
-          }
-        }
       }
     });
 
@@ -39,7 +32,7 @@ export async function POST(
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         userId,
-        courseId: assessment.module.courseId
+        courseId: assessment.courseId
       }
     });
 
@@ -48,7 +41,7 @@ export async function POST(
     }
 
     // Check if assessment is still available
-    if (new Date() > assessment.dueDate) {
+    if (assessment.endDateTime && new Date() > assessment.endDateTime) {
       return NextResponse.json({ error: "Assessment deadline has passed" }, { status: 400 });
     }
 
@@ -70,7 +63,7 @@ export async function POST(
       where: {
         assessmentId,
         userId,
-        status: 'COMPLETED'
+        status: 'GRADED'
       }
     });
 
@@ -79,20 +72,21 @@ export async function POST(
     }
 
     // Create new attempt
+    const attemptNumber = completedAttempts + 1;
     const attempt = await prisma.assessmentAttempt.create({
       data: {
         assessmentId,
         userId,
+        attemptNumber,
         startedAt: new Date(),
-        status: 'IN_PROGRESS',
-        answers: {}
+        status: 'IN_PROGRESS'
       }
     });
 
     return NextResponse.json({
       id: attempt.id,
       startedAt: attempt.startedAt,
-      timeRemaining: assessment.duration * 60, // Convert minutes to seconds
+      timeRemaining: assessment.duration ? assessment.duration * 60 : null, // Convert minutes to seconds
       answers: {}
     });
 
