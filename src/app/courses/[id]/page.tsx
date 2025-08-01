@@ -75,6 +75,7 @@ export default function CourseDetailPage() {
     if (status === 'loading') return;
     if (!session) router.push('/auth/signin');
     else fetchCourseDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, courseId]);
 
   const fetchCourseDetails = async () => {

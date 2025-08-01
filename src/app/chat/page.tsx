@@ -154,6 +154,7 @@ export default function ChatPage() {
                         >
                           {message.imageUrl && message.role === 'user' && (
                             <div className="mb-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img 
                                 src={message.imageUrl} 
                                 alt="User uploaded image" 
