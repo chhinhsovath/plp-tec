@@ -54,7 +54,7 @@ export async function GET(
       let isCorrect = false;
       let earnedPoints = 0;
 
-      if (userAnswer) {
+      if (userAnswer && userAnswer.answer) {
         switch (question.type) {
           case 'MULTIPLE_CHOICE':
           case 'TRUE_FALSE':
