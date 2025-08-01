@@ -4,6 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TelegramLogin, { TelegramUser } from '@/components/auth/telegram-login';
+import TelegramLoginInline from '@/components/auth/telegram-login-inline';
 import { MessageOutlined } from '@ant-design/icons';
 
 export default function SignIn() {
@@ -148,18 +149,32 @@ export default function SignIn() {
             </div>
           </div>
 
-          <div className="flex justify-center">
-            {!loading && (
-              <TelegramLogin
-                botName="plp_tec_bot"
-                onAuth={handleTelegramAuth}
-                buttonSize="large"
-              />
-            )}
-            {loading && (
-              <div className="flex items-center space-x-2 text-gray-500">
-                <MessageOutlined className="animate-pulse" />
-                <span>Authenticating...</span>
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              {!loading && (
+                <TelegramLogin
+                  botName="plp_tec_bot"
+                  onAuth={handleTelegramAuth}
+                  buttonSize="large"
+                />
+              )}
+              {loading && (
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <MessageOutlined className="animate-pulse" />
+                  <span>Authenticating...</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Alternative method - inline script */}
+            {!loading && typeof window !== 'undefined' && window.location.hostname !== 'localhost' && (
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-2">Alternative login method:</p>
+                <TelegramLoginInline
+                  botName="plp_tec_bot"
+                  onAuth={handleTelegramAuth}
+                  buttonSize="large"
+                />
               </div>
             )}
           </div>

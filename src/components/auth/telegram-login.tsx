@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { MessageOutlined } from '@ant-design/icons';
 
@@ -31,16 +31,21 @@ declare global {
 
 export default function TelegramLogin({ botName, onAuth, buttonSize = 'large' }: TelegramLoginProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const [isLoading, setIsLoading] = useState(true);
+  const [showMockButton, setShowMockButton] = useState(false);
 
   useEffect(() => {
+    // Check if we're in development
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    setShowMockButton(isDev);
+    
     // Set the callback function for Telegram
     window.TelegramLoginWidget = {
       dataOnauth: (user: TelegramUser) => onAuth(user),
     };
 
-    // Create the widget manually
-    if (ref.current && !ref.current.hasChildNodes()) {
+    // Only load the widget in production or if not showing mock
+    if (!isDev && ref.current && !ref.current.hasChildNodes()) {
       const script = document.createElement('script');
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
       script.setAttribute('data-telegram-login', botName);
@@ -48,12 +53,24 @@ export default function TelegramLogin({ botName, onAuth, buttonSize = 'large' }:
       script.setAttribute('data-onauth', 'TelegramLoginWidget.dataOnauth(user)');
       script.setAttribute('data-request-access', 'write');
       script.async = true;
+      
+      script.onload = () => {
+        setIsLoading(false);
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Telegram widget');
+        setIsLoading(false);
+      };
+      
       ref.current.appendChild(script);
+    } else if (isDev) {
+      setIsLoading(false);
     }
   }, [botName, buttonSize, onAuth]);
 
   // In development, show a mock button
-  if (isDevelopment) {
+  if (showMockButton) {
     return (
       <div className="text-center space-y-4">
         <button
@@ -81,13 +98,18 @@ export default function TelegramLogin({ botName, onAuth, buttonSize = 'large' }:
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="text-center">
+        <div className="inline-flex items-center px-6 py-3 text-gray-500">
+          <MessageOutlined className="mr-2 animate-pulse" />
+          Loading Telegram Login...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Script
-        src="https://telegram.org/js/telegram-widget.js?22"
-        strategy="afterInteractive"
-      />
-      <div ref={ref} />
-    </>
+    <div ref={ref} className="flex justify-center" />
   );
 }
