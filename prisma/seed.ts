@@ -6,8 +6,31 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Starting seed...')
 
-  // Create admin user
+  // Create admin users
   const adminPassword = await bcrypt.hash('admin123', 10)
+  
+  // Your custom admin account
+  const customAdmin = await prisma.user.upsert({
+    where: { email: 'chhinhs@gmail.com' },
+    update: {},
+    create: {
+      email: 'chhinhs@gmail.com',
+      username: 'chhinhs',
+      password: adminPassword,
+      firstName: 'Chhinh',
+      lastName: 'Sovath',
+      role: UserRole.ADMIN,
+      emailVerified: new Date(),
+      profile: {
+        create: {
+          phoneNumber: '+855123456789',
+          address: 'Phnom Penh, Cambodia',
+        }
+      }
+    },
+  })
+  
+  // Default system admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@tec-lms.com' },
     update: {},
@@ -324,9 +347,12 @@ async function main() {
   })
 
   console.log('Seed completed successfully!')
-  console.log('Admin credentials: admin@tec-lms.com / admin123')
-  console.log('Instructor credentials: instructor1@tec-lms.com / instructor123')
-  console.log('Student credentials: student1@tec-lms.com / student123')
+  console.log('\n📝 Admin Credentials:')
+  console.log('Your account: chhinhs@gmail.com / admin123')
+  console.log('System admin: admin@tec-lms.com / admin123')
+  console.log('\n📝 Other Test Accounts:')
+  console.log('Instructor: instructor1@tec-lms.com / instructor123')
+  console.log('Student: student1@tec-lms.com / student123')
 }
 
 main()
