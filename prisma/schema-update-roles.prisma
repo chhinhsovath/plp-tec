@@ -1,0 +1,174 @@
+// Additional models for comprehensive role-based system
+
+model Role {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  displayName     String
+  description     String?
+  level           Int       // Hierarchy level (1 = highest)
+  isActive        Boolean   @default(true)
+  isSystem        Boolean   @default(false) // System roles cannot be deleted
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  permissions     RolePermission[]
+  userRoles       UserRole[]
+  
+  @@index([name])
+  @@index([level])
+}
+
+model Permission {
+  id              String    @id @default(cuid())
+  resource        String    // e.g., "course", "user", "assessment"
+  action          String    // e.g., "create", "read", "update", "delete"
+  description     String?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  rolePermissions RolePermission[]
+  
+  @@unique([resource, action])
+  @@index([resource])
+}
+
+model RolePermission {
+  id              String    @id @default(cuid())
+  roleId          String
+  permissionId    String
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  role            Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission      Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id              String    @id @default(cuid())
+  userId          String
+  roleId          String
+  institutionId   String?   // For institution-specific roles
+  departmentId    String?   // For department-specific roles
+  assignedBy      String?
+  validFrom       DateTime  @default(now())
+  validUntil      DateTime?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            Role      @relation(fields: [roleId], references: [id])
+  institution     Institution? @relation(fields: [institutionId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+  
+  @@unique([userId, roleId, institutionId, departmentId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([institutionId])
+  @@index([departmentId])
+}
+
+// Organizational Structure for Nationwide System
+model Institution {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  type            InstitutionType
+  address         String
+  city            String
+  province        String
+  postalCode      String?
+  phoneNumber     String
+  email           String
+  website         String?
+  establishedDate DateTime?
+  accreditationStatus String?
+  isActive        Boolean   @default(true)
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  departments     Department[]
+  userRoles       UserRole[]
+  courses         InstitutionCourse[]
+  
+  @@index([type])
+  @@index([province])
+  @@index([isActive])
+}
+
+model Department {
+  id              String    @id @default(cuid())
+  institutionId   String
+  code            String
+  name            String
+  description     String?
+  headUserId      String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  institution     Institution @relation(fields: [institutionId], references: [id])
+  userRoles       UserRole[]
+  programs        Program[]
+  
+  @@unique([institutionId, code])
+  @@index([institutionId])
+}
+
+model Program {
+  id              String    @id @default(cuid())
+  departmentId    String
+  code            String
+  name            String
+  description     String?
+  duration        Int       // in years
+  creditRequired  Int
+  degree          String    // e.g., "Bachelor of Education"
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  department      Department @relation(fields: [departmentId], references: [id])
+  
+  @@unique([departmentId, code])
+  @@index([departmentId])
+}
+
+model InstitutionCourse {
+  id              String    @id @default(cuid())
+  institutionId   String
+  courseId        String
+  semester        String
+  academicYear    String
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  institution     Institution @relation(fields: [institutionId], references: [id])
+  
+  @@unique([institutionId, courseId, semester, academicYear])
+  @@index([institutionId])
+  @@index([courseId])
+}
+
+// Update User model to support new role system
+// Add these relations to the existing User model:
+// userRoles       UserRole[]
+
+// Add these enums
+enum InstitutionType {
+  TEACHER_EDUCATION_COLLEGE
+  UNIVERSITY
+  TRAINING_CENTER
+  EDUCATION_MINISTRY
+  REGIONAL_OFFICE
+  DISTRICT_OFFICE
+}

@@ -3,11 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { chatMessageSchema } from "@/lib/validations";
 import { chatRateLimit } from "@/lib/rate-limit";
+import { canAccessChat } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 // OpenRouter configuration
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free';
 
 const SYSTEM_PROMPT = `You are an AI learning assistant for a Teacher Education College (TEC) Learning Management System. 
 Your role is to help students and instructors with:
@@ -26,6 +28,15 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user has permission to access chat
+    const hasAccess = await canAccessChat(session.user.id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "You don't have permission to access the chat feature" },
+        { status: 403 }
+      );
     }
 
     // Apply rate limiting
@@ -60,8 +71,8 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-            "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-            "X-Title": "TEC LMS",
+            "HTTP-Referer": "https://tec.openplp.com",
+            "X-Title": "PLP TEC",
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
@@ -89,6 +100,24 @@ export async function POST(req: NextRequest) {
       // Fallback response when OpenRouter is not configured
       aiResponse = generateFallbackResponse(message);
     }
+
+    // Store chat message in database
+    await prisma.chatMessage.createMany({
+      data: [
+        {
+          userId: session.user.id,
+          sessionId: sessionId || generateSessionId(),
+          role: 'USER',
+          content: message,
+        },
+        {
+          userId: session.user.id,
+          sessionId: sessionId || generateSessionId(),
+          role: 'ASSISTANT',
+          content: aiResponse,
+        }
+      ]
+    });
 
     return NextResponse.json({
       response: aiResponse,

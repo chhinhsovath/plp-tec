@@ -10,6 +10,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  imageUrl?: string;
 }
 
 export default function ChatPage() {
@@ -19,6 +20,8 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(`session-${Date.now()}`);
+  const [imageUrl, setImageUrl] = useState('');
+  const [showImageInput, setShowImageInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function ChatPage() {
       role: 'user',
       content: input,
       timestamp: new Date(),
+      imageUrl: imageUrl || undefined,
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -45,15 +49,17 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const endpoint = imageUrl ? '/api/chat/vision' : '/api/chat';
+      const body = imageUrl 
+        ? { message: input, imageUrl, sessionId }
+        : { message: input, sessionId };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: input,
-          sessionId,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -66,6 +72,7 @@ export default function ChatPage() {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, assistantMessage]);
+        setImageUrl('');
       } else {
         console.error('Error:', data.error);
       }
@@ -122,7 +129,7 @@ export default function ChatPage() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <p className="mb-4">👋 Hello! I'm your AI learning assistant.</p>
+                <p className="mb-4">👋 Hello! I&apos;m your AI learning assistant.</p>
                 <p className="text-sm">I can help you with:</p>
                 <ul className="text-sm mt-2 space-y-1">
                   <li>• Understanding educational concepts</li>
@@ -145,6 +152,15 @@ export default function ChatPage() {
                       : 'bg-gray-200 text-gray-800'
                   }`}
                 >
+                  {message.imageUrl && message.role === 'user' && (
+                    <div className="relative w-full h-48 mb-2">
+                      <img 
+                        src={message.imageUrl} 
+                        alt="User uploaded image" 
+                        className="object-contain w-full h-full rounded"
+                      />
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   <p className={`text-xs mt-1 ${
                     message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
@@ -172,6 +188,17 @@ export default function ChatPage() {
 
           {/* Input Container */}
           <div className="border-t p-4">
+            {showImageInput && (
+              <div className="mb-3">
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Enter image URL for analysis..."
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
             <div className="flex space-x-4">
               <textarea
                 value={input}
@@ -182,6 +209,13 @@ export default function ChatPage() {
                 rows={3}
                 disabled={loading}
               />
+              <button
+                onClick={() => setShowImageInput(!showImageInput)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                title="Add image for analysis"
+              >
+                🖼️
+              </button>
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || loading}
